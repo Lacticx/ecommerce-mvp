@@ -1,0 +1,216 @@
+syntax = "proto3";
+
+package ecommerce;
+
+// 1. Auth Service (Identity & Access Bounded Context)
+service AuthService {
+  rpc Register (RegisterRequest) returns (RegisterResponse);
+  rpc Login (LoginRequest) returns (LoginResponse);
+  rpc VerifyToken (VerifyTokenRequest) returns (VerifyTokenResponse);
+}
+
+message RegisterRequest {
+  string username = 1;
+  string password = 2;
+  string email = 3;
+  string phone = 4;
+}
+
+message RegisterResponse {
+  string message = 1;
+  int32 uid = 2;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string accessToken = 1;
+  string tokenType = 2;
+  int32 expiresIn = 3;
+}
+
+message VerifyTokenRequest {
+  string token = 1;
+}
+
+message VerifyTokenResponse {
+  bool valid = 1;
+  int32 uid = 2;
+  string role = 3;
+}
+
+// 2. Customer Service (Customer & Membership Bounded Context)
+service CustomerService {
+  rpc CreateCustomer (CreateCustomerRequest) returns (CustomerResponse);
+  rpc GetCustomer (GetCustomerRequest) returns (CustomerResponse);
+  rpc UpdateCustomer (UpdateCustomerRequest) returns (UpdateCustomerResponse);
+  rpc GetMembershipScore (GetCustomerRequest) returns (MembershipScoreResponse);
+}
+
+message CreateCustomerRequest {
+  int32 uid = 1;
+  string fullname = 2;
+  int32 mid = 3;
+}
+
+message GetCustomerRequest {
+  int32 uid = 1;
+}
+
+message CustomerResponse {
+  int32 uid = 1;
+  string fullname = 2;
+  int32 mid = 3;
+}
+
+message UpdateCustomerRequest {
+  int32 uid = 1;
+  string fullname = 2;
+  int32 mid = 3;
+}
+
+message UpdateCustomerResponse {
+  string message = 1;
+  int32 uid = 2;
+}
+
+message MembershipScoreResponse {
+  int32 uid = 1;
+  int32 mid = 2;
+  string mname = 3;
+  int32 score = 4;
+}
+
+// 3. Product Service (Product Catalog Bounded Context)
+service ProductService {
+  rpc GetProducts (Empty) returns (ProductListResponse);
+  rpc GetProductById (GetProductRequest) returns (ProductResponse);
+  rpc CreateProduct (CreateProductRequest) returns (ProductResponse);
+  rpc UpdateProduct (UpdateProductRequest) returns (ActionMessageResponse);
+  rpc DeleteProduct (GetProductRequest) returns (ActionMessageResponse);
+  rpc CheckAndReduceStock (StockUpdateRequest) returns (StockUpdateResponse);
+}
+
+message Empty {}
+
+message GetProductRequest {
+  int32 pid = 1;
+}
+
+message ProductResponse {
+  int32 pid = 1;
+  string pname = 2;
+  double price = 3;
+  int32 quantity = 4;
+}
+
+message ProductListResponse {
+  repeated ProductResponse items = 1;
+}
+
+message CreateProductRequest {
+  string pname = 1;
+  double price = 2;
+  int32 quantity = 3;
+}
+
+message UpdateProductRequest {
+  int32 pid = 1;
+  string pname = 2;
+  double price = 3;
+  int32 quantity = 4;
+}
+
+message ActionMessageResponse {
+  string message = 1;
+  int32 pid = 2;
+}
+
+message OrderItemStock {
+  int32 pid = 1;
+  int32 qty = 2;
+}
+
+message StockUpdateRequest {
+  repeated OrderItemStock items = 1;
+}
+
+message ValidatedOrderItem {
+  int32 pid = 1;
+  int32 qty = 2;
+  double unit_price = 3;
+}
+
+message StockUpdateResponse {
+  bool success = 1;
+  repeated ValidatedOrderItem validated_items = 2;
+}
+
+// 4. Order Service (Order Management Bounded Context)
+service OrderService {
+  rpc CreateOrder (CreateOrderRequest) returns (OrderResponse);
+  rpc GetOrders (GetOrdersRequest) returns (OrderListResponse);
+  rpc GetOrderById (GetOrderByIdRequest) returns (OrderResponse);
+}
+
+message CreateOrderRequest {
+  int32 uid = 1;
+  repeated OrderItemStock items = 2;
+}
+
+message GetOrdersRequest {
+  int32 uid = 1;
+  string role = 2;
+}
+
+message GetOrderByIdRequest {
+  int32 oid = 1;
+  int32 uid = 2;
+  string role = 3;
+}
+
+message ShipmentSummary {
+  int32 shipid = 1;
+  string status = 2;
+}
+
+message OrderResponse {
+  int32 oid = 1;
+  int32 uid = 2;
+  double discount = 3;
+  repeated ValidatedOrderItem items = 4;
+  ShipmentSummary shipment = 5;
+}
+
+message OrderListResponse {
+  repeated OrderResponse items = 1;
+}
+
+// 5. Shipment Service (Shipment Bounded Context)
+service ShipmentService {
+  rpc GetShipmentById (GetShipmentRequest) returns (ShipmentResponse);
+  rpc GetShipmentByOrderId (GetShipmentByOrderRequest) returns (ShipmentResponse);
+  rpc UpdateShipmentStatus (UpdateShipmentStatusRequest) returns (ShipmentResponse);
+}
+
+message GetShipmentRequest {
+  int32 shipid = 1;
+}
+
+message GetShipmentByOrderRequest {
+  int32 oid = 1;
+}
+
+message UpdateShipmentStatusRequest {
+  int32 shipid = 1;
+  string status = 2;
+}
+
+message ShipmentResponse {
+  int32 shipid = 1;
+  int32 oid = 2;
+  string status = 3;
+}
